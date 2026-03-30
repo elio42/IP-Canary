@@ -1,0 +1,25 @@
+services:
+  watchdog:
+    image: "elio11/ip-canary:latest"
+    container_name: "ip-canary-watchdog"
+    restart: unless-stopped
+    environment:
+      - MODE=watchdog
+      - CHECK_INTERVAL=60 # optional, default is 60 seconds
+      - USE_GOTIFY=true # optional, default is true. Set to false to disable Gotify notifications.
+      - MESSAGE_REPEAT_MINUTES=30 # optional, default is 30 minutes
+      # Either PUBLIC_IP or REAL_IP_URL, or both must be set.
+      # - PUBLIC_IP=___
+      - REAL_IP_URL=http://ip-canary-provider:9516/public-ip # This example url here only works here because they are in the same docker network. In a real deployment, you would point this to the actual URL of the ip_provider service.
+      - PROVIDER_FAILURE_TOLERANCE=3 # optional, default is 3 consecutive failures
+      - GOTIFY_URL=--- # mandatory if USE_GOTIFY=true
+      - GOTIFY_API_KEY=--- # mandatory if USE_GOTIFY=true
+
+  ip_provider:
+    image: "ip-canary:latest"
+    container_name: "ip-canary-provider"
+    restart: unless-stopped
+    environment:
+      - MODE=ip_provider
+    ports:
+      - "9516:9516"
