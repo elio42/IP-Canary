@@ -9,9 +9,12 @@ json_escape() {
 send_gotify_message() {
 	title="$1"
 	message="$2"
+	instance_label="${INSTANCE_NAME:-unknown-instance}"
+	full_title="[$instance_label] $title"
+	full_message="$(printf 'Instance: %s\n%s' "$instance_label" "$message")"
 
 	endpoint="${GOTIFY_URL%/}/message?token=${GOTIFY_API_KEY}"
-	payload="{\"title\":\"$(json_escape "$title")\",\"message\":\"$(json_escape "$message")\"}"
+	payload="{\"title\":\"$(json_escape "$full_title")\",\"message\":\"$(json_escape "$full_message")\"}"
 
 	tmp_body="$(mktemp)"
 	status="$(curl -sS -L --max-time "${HTTP_TIMEOUT:-10}" -o "$tmp_body" -w "%{http_code}" -H "Content-Type: application/json" -d "$payload" "$endpoint")"

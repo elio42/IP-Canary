@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-HEALTH_FILE="${HEALTH_FILE:-/tmp/ip-canary-health}"
+HEALTH_FILE="/shared-state/ip-canary-health"
 
 if [ ! -f "$HEALTH_FILE" ]; then
     exit 0

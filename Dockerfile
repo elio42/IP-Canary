@@ -8,6 +8,7 @@ RUN chmod +x /scripts/entry_script.sh \
 	/scripts/watchdog/watchdog.sh \
 	/scripts/base_ip_provider/ip_provider.sh \
 	/scripts/messenger/gotify_messenger.sh \
+	/scripts/heartbeat/heartbeat_observer.sh \
 	/scripts/ip_provider/ip_provider.sh \
 	/scripts/healthcheck.sh \
 	/scripts/health/health_state.sh

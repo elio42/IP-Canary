@@ -60,17 +60,29 @@ if ! validate_interval "$CHECK_INTERVAL"; then
 fi
 export CHECK_INTERVAL
 
-MESSAGE_REPEAT_MINUTES="${MESSAGE_REPEAT_MINUTES:-30}"
-if ! validate_interval "$MESSAGE_REPEAT_MINUTES"; then
-	fail "MESSAGE_REPEAT_MINUTES must be a positive integer."
+MESSAGE_REPEAT_SECONDS="${MESSAGE_REPEAT_SECONDS:-1800}"
+if ! validate_interval "$MESSAGE_REPEAT_SECONDS"; then
+	fail "MESSAGE_REPEAT_SECONDS must be a positive integer."
 fi
-export MESSAGE_REPEAT_MINUTES
+export MESSAGE_REPEAT_SECONDS
 
 PROVIDER_FAILURE_TOLERANCE="${PROVIDER_FAILURE_TOLERANCE:-3}"
 if ! validate_non_negative_integer "$PROVIDER_FAILURE_TOLERANCE"; then
 	fail "PROVIDER_FAILURE_TOLERANCE must be a non-negative integer."
 fi
 export PROVIDER_FAILURE_TOLERANCE
+
+INSTANCE_NAME="${INSTANCE_NAME:-${HOSTNAME:-}}"
+if [ -z "$INSTANCE_NAME" ]; then
+	INSTANCE_NAME="$(hostname)"
+fi
+export INSTANCE_NAME
+
+HEARTBEAT_STALE_SECONDS="${HEARTBEAT_STALE_SECONDS:-360}"
+if ! validate_interval "$HEARTBEAT_STALE_SECONDS"; then
+	fail "HEARTBEAT_STALE_SECONDS must be a positive integer."
+fi
+export HEARTBEAT_STALE_SECONDS
 
 USE_GOTIFY_NORMALIZED="$(normalize_bool "${USE_GOTIFY:-true}")" || fail "USE_GOTIFY must be a boolean value."
 export USE_GOTIFY="$USE_GOTIFY_NORMALIZED"
@@ -84,10 +96,6 @@ case "$MODE" in
 		if [ "$USE_GOTIFY" = "true" ]; then
 			[ -n "${GOTIFY_URL:-}" ] || fail "GOTIFY_URL is required when USE_GOTIFY=true."
 			[ -n "${GOTIFY_API_KEY:-}" ] || fail "GOTIFY_API_KEY is required when USE_GOTIFY=true."
-
-			if ! send_gotify_message "IP Canary startup test" "Startup connectivity check for watchdog mode."; then
-				fail "Startup Gotify test failed. Exiting."
-			fi
 		fi
 
 		exec sh /scripts/watchdog/watchdog.sh
@@ -95,7 +103,15 @@ case "$MODE" in
 	ip_provider)
 		exec sh /scripts/ip_provider/ip_provider.sh
 		;;
+	heartbeat_observer)
+		if [ "$USE_GOTIFY" = "true" ]; then
+			[ -n "${GOTIFY_URL:-}" ] || fail "GOTIFY_URL is required when USE_GOTIFY=true."
+			[ -n "${GOTIFY_API_KEY:-}" ] || fail "GOTIFY_API_KEY is required when USE_GOTIFY=true."
+		fi
+
+		exec sh /scripts/heartbeat/heartbeat_observer.sh
+		;;
 	*)
-		fail "Unsupported MODE '$MODE'. Use watchdog or ip_provider."
+		fail "Unsupported MODE '$MODE'. Use watchdog, ip_provider, or heartbeat_observer."
 		;;
 esac
